@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.coursetracker.mapper.CourseMapper">
+
+    <resultMap id="CourseResultMap" type="com.learning.coursetracker.entity.Course">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="instructor" column="instructor"/>
+        <result property="coverImageUrl" column="cover_image_url"/>
+        <result property="totalDuration" column="total_duration"/>
+        <result property="difficultyLevel" column="difficulty_level"/>
+        <result property="status" column="status"/>
+        <result property="published" column="published"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <association property="category" javaType="com.learning.coursetracker.entity.CourseCategory">
+            <id property="id" column="cat_id"/>
+            <result property="name" column="cat_name"/>
+        </association>
+    </resultMap>
+
+    <sql id="courseWithCategory">
+        SELECT c.*, cc.id as cat_id, cc.name as cat_name
+        FROM courses c
+        LEFT JOIN course_categories cc ON c.category_id = cc.id
+    </sql>
+
+    <select id="findAll" resultMap="CourseResultMap">
+        <include refid="courseWithCategory"/>
+        <where>
+            <if test="categoryId != null">AND c.category_id = #{categoryId}</if>
+            <if test="keyword != null and keyword != ''">AND c.title LIKE CONCAT('%', #{keyword}, '%')</if>
+        </where>
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="findPublishedCourses" resultMap="CourseResultMap">
+        <include refid="courseWithCategory"/>
+        <where>
+            AND c.published = TRUE AND c.status = 'PUBLISHED'
+            <if test="categoryId != null">AND c.category_id = #{categoryId}</if>
+            <if test="keyword != null and keyword != ''">AND c.title LIKE CONCAT('%', #{keyword}, '%')</if>
+        </where>
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="findById" resultMap="CourseResultMap">
+        <include refid="courseWithCategory"/>
+        WHERE c.id = #{id}
+    </select>
+
+    <select id="findByCategoryId" resultMap="CourseResultMap">
+        <include refid="courseWithCategory"/>
+        WHERE c.category_id = #{categoryId}
+        ORDER BY c.created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.learning.coursetracker.entity.Course" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO courses (title, description, category_id, instructor, cover_image_url,
+                            total_duration, difficulty_level, status, published, created_by, created_at, updated_at)
+        VALUES (#{title}, #{description}, #{categoryId}, #{instructor}, #{coverImageUrl},
+                #{totalDuration}, #{difficultyLevel}, #{status}, #{published}, #{createdBy}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="update" parameterType="com.learning.coursetracker.entity.Course">
+        UPDATE courses
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="instructor != null">instructor = #{instructor},</if>
+            <if test="coverImageUrl != null">cover_image_url = #{coverImageUrl},</if>
+            <if test="totalDuration != null">total_duration = #{totalDuration},</if>
+            <if test="difficultyLevel != null">difficulty_level = #{difficultyLevel},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="published != null">published = #{published},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM courses WHERE id = #{id}
+    </delete>
+
+</mapper>

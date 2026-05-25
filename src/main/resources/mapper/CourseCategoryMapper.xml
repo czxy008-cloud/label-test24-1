@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.coursetracker.mapper.CourseCategoryMapper">
+
+    <resultMap id="CourseCategoryResultMap" type="com.learning.coursetracker.entity.CourseCategory">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="CourseCategoryResultMap">
+        SELECT * FROM course_categories ORDER BY sort_order ASC
+    </select>
+
+    <select id="findById" resultMap="CourseCategoryResultMap">
+        SELECT * FROM course_categories WHERE id = #{id}
+    </select>
+
+    <select id="findByParentId" resultMap="CourseCategoryResultMap">
+        SELECT * FROM course_categories WHERE parent_id = #{parentId} ORDER BY sort_order ASC
+    </select>
+
+</mapper>

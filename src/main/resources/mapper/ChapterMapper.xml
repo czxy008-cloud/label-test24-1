@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.coursetracker.mapper.ChapterMapper">
+
+    <resultMap id="ChapterResultMap" type="com.learning.coursetracker.entity.Chapter">
+        <id property="id" column="id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="videoUrl" column="video_url"/>
+        <result property="duration" column="duration"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="isFree" column="is_free"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByCourseId" resultMap="ChapterResultMap">
+        SELECT * FROM chapters WHERE course_id = #{courseId} ORDER BY sort_order ASC
+    </select>
+
+    <select id="findById" resultMap="ChapterResultMap">
+        SELECT * FROM chapters WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.learning.coursetracker.entity.Chapter" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chapters (course_id, title, description, video_url, duration, sort_order, is_free, created_at, updated_at)
+        VALUES (#{courseId}, #{title}, #{description}, #{videoUrl}, #{duration}, #{sortOrder}, #{isFree}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="update" parameterType="com.learning.coursetracker.entity.Chapter">
+        UPDATE chapters
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="isFree != null">is_free = #{isFree},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM chapters WHERE id = #{id}
+    </delete>
+
+    <select id="countByCourseId" resultType="int">
+        SELECT COUNT(*) FROM chapters WHERE course_id = #{courseId}
+    </select>
+
+</mapper>

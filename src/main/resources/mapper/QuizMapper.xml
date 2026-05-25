@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.coursetracker.mapper.QuizMapper">
+
+    <resultMap id="QuizResultMap" type="com.learning.coursetracker.entity.Quiz">
+        <id property="id" column="id"/>
+        <result property="chapterId" column="chapter_id"/>
+        <result property="questionText" column="question_text"/>
+        <result property="optionA" column="option_a"/>
+        <result property="optionB" column="option_b"/>
+        <result property="optionC" column="option_c"/>
+        <result property="optionD" column="option_d"/>
+        <result property="correctAnswer" column="correct_answer"/>
+        <result property="explanation" column="explanation"/>
+        <result property="points" column="points"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findByChapterId" resultMap="QuizResultMap">
+        SELECT * FROM quizzes WHERE chapter_id = #{chapterId} ORDER BY id ASC
+    </select>
+
+    <select id="findById" resultMap="QuizResultMap">
+        SELECT * FROM quizzes WHERE id = #{id}
+    </select>
+
+    <select id="countByChapterId" resultType="int">
+        SELECT COUNT(*) FROM quizzes WHERE chapter_id = #{chapterId}
+    </select>
+
+    <insert id="insert" parameterType="com.learning.coursetracker.entity.Quiz" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO quizzes (chapter_id, question_text, option_a, option_b, option_c, option_d,
+                            correct_answer, explanation, points, created_at)
+        VALUES (#{chapterId}, #{questionText}, #{optionA}, #{optionB}, #{optionC}, #{optionD},
+                #{correctAnswer}, #{explanation}, #{points}, #{createdAt})
+    </insert>
+
+    <update id="update" parameterType="com.learning.coursetracker.entity.Quiz">
+        UPDATE quizzes
+        <set>
+            <if test="questionText != null">question_text = #{questionText},</if>
+            <if test="optionA != null">option_a = #{optionA},</if>
+            <if test="optionB != null">option_b = #{optionB},</if>
+            <if test="optionC != null">option_c = #{optionC},</if>
+            <if test="optionD != null">option_d = #{optionD},</if>
+            <if test="correctAnswer != null">correct_answer = #{correctAnswer},</if>
+            <if test="explanation != null">explanation = #{explanation},</if>
+            <if test="points != null">points = #{points}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM quizzes WHERE id = #{id}
+    </delete>
+
+</mapper>

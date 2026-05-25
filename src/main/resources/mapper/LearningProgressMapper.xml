@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.coursetracker.mapper.LearningProgressMapper">
+
+    <resultMap id="LearningProgressResultMap" type="com.learning.coursetracker.entity.LearningProgress">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="chapterId" column="chapter_id"/>
+        <result property="lastPosition" column="last_position"/>
+        <result property="isCompleted" column="is_completed"/>
+        <result property="completedAt" column="completed_at"/>
+        <result property="firstWatchedAt" column="first_watched_at"/>
+        <result property="lastWatchedAt" column="last_watched_at"/>
+        <result property="totalWatchTime" column="total_watch_time"/>
+    </resultMap>
+
+    <select id="findByUserAndChapter" resultMap="LearningProgressResultMap">
+        SELECT * FROM learning_progress WHERE user_id = #{userId} AND chapter_id = #{chapterId}
+    </select>
+
+    <select id="findByUserId" resultMap="LearningProgressResultMap">
+        SELECT * FROM learning_progress WHERE user_id = #{userId}
+    </select>
+
+    <select id="findByUserIdAndCourseId" resultMap="LearningProgressResultMap">
+        SELECT lp.* FROM learning_progress lp
+        INNER JOIN chapters c ON lp.chapter_id = c.id
+        WHERE lp.user_id = #{userId} AND c.course_id = #{courseId}
+    </select>
+
+    <select id="countCompletedChapters" resultType="int">
+        SELECT COUNT(*) FROM learning_progress lp
+        INNER JOIN chapters c ON lp.chapter_id = c.id
+        WHERE lp.user_id = #{userId} AND c.course_id = #{courseId} AND lp.is_completed = TRUE
+    </select>
+
+    <select id="countTotalChaptersByCourseId" resultType="int">
+        SELECT COUNT(*) FROM chapters WHERE course_id = #{courseId}
+    </select>
+
+    <insert id="insert" parameterType="com.learning.coursetracker.entity.LearningProgress" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO learning_progress (user_id, chapter_id, last_position, is_completed, completed_at,
+                                       first_watched_at, last_watched_at, total_watch_time)
+        VALUES (#{userId}, #{chapterId}, #{lastPosition}, #{isCompleted}, #{completedAt},
+                #{firstWatchedAt}, #{lastWatchedAt}, #{totalWatchTime})
+    </insert>
+
+    <update id="update" parameterType="com.learning.coursetracker.entity.LearningProgress">
+        UPDATE learning_progress
+        <set>
+            <if test="lastPosition != null">last_position = #{lastPosition},</if>
+            <if test="isCompleted != null">is_completed = #{isCompleted},</if>
+            <if test="completedAt != null">completed_at = #{completedAt},</if>
+            last_watched_at = NOW(),
+            <if test="totalWatchTime != null">total_watch_time = #{totalWatchTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="getTotalWatchTimeByUser" resultType="int">
+        SELECT COALESCE(SUM(total_watch_time), 0) FROM learning_progress WHERE user_id = #{userId}
+    </select>
+
+    <select id="getTotalWatchTimeByUserAndCourse" resultType="int">
+        SELECT COALESCE(SUM(lp.total_watch_time), 0) FROM learning_progress lp
+        INNER JOIN chapters c ON lp.chapter_id = c.id
+        WHERE lp.user_id = #{userId} AND c.course_id = #{courseId}
+    </select>
+
+</mapper>

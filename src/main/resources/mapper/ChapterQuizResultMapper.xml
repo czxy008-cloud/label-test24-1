@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.coursetracker.mapper.ChapterQuizResultMapper">
+
+    <resultMap id="ChapterQuizResultResultMap" type="com.learning.coursetracker.entity.ChapterQuizResult">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="chapterId" column="chapter_id"/>
+        <result property="totalScore" column="total_score"/>
+        <result property="maxScore" column="max_score"/>
+        <result property="correctCount" column="correct_count"/>
+        <result property="totalCount" column="total_count"/>
+        <result property="attemptCount" column="attempt_count"/>
+        <result property="isPassed" column="is_passed"/>
+        <result property="submittedAt" column="submitted_at"/>
+    </resultMap>
+
+    <select id="findByUserAndChapter" resultMap="ChapterQuizResultResultMap">
+        SELECT * FROM chapter_quiz_results WHERE user_id = #{userId} AND chapter_id = #{chapterId}
+    </select>
+
+    <select id="findByUserId" resultMap="ChapterQuizResultResultMap">
+        SELECT * FROM chapter_quiz_results WHERE user_id = #{userId}
+    </select>
+
+    <select id="findByUserIdAndCourseId" resultMap="ChapterQuizResultResultMap">
+        SELECT cqr.* FROM chapter_quiz_results cqr
+        INNER JOIN chapters c ON cqr.chapter_id = c.id
+        WHERE cqr.user_id = #{userId} AND c.course_id = #{courseId}
+    </select>
+
+    <insert id="insert" parameterType="com.learning.coursetracker.entity.ChapterQuizResult" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chapter_quiz_results (user_id, chapter_id, total_score, max_score, correct_count,
+                                         total_count, attempt_count, is_passed, submitted_at)
+        VALUES (#{userId}, #{chapterId}, #{totalScore}, #{maxScore}, #{correctCount},
+                #{totalCount}, #{attemptCount}, #{isPassed}, #{submittedAt})
+    </insert>
+
+    <update id="update" parameterType="com.learning.coursetracker.entity.ChapterQuizResult">
+        UPDATE chapter_quiz_results
+        <set>
+            <if test="totalScore != null">total_score = #{totalScore},</if>
+            <if test="maxScore != null">max_score = #{maxScore},</if>
+            <if test="correctCount != null">correct_count = #{correctCount},</if>
+            <if test="totalCount != null">total_count = #{totalCount},</if>
+            <if test="attemptCount != null">attempt_count = #{attemptCount},</if>
+            <if test="isPassed != null">is_passed = #{isPassed},</if>
+            submitted_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="getAverageScoreByUser" resultType="double">
+        SELECT COALESCE(AVG(total_score), 0) FROM chapter_quiz_results WHERE user_id = #{userId}
+    </select>
+
+    <select id="getAverageScoreByUserAndCourse" resultType="double">
+        SELECT COALESCE(AVG(cqr.total_score), 0) FROM chapter_quiz_results cqr
+        INNER JOIN chapters c ON cqr.chapter_id = c.id
+        WHERE cqr.user_id = #{userId} AND c.course_id = #{courseId}
+    </select>
+
+    <select id="countPassedChapters" resultType="int">
+        SELECT COUNT(*) FROM chapter_quiz_results WHERE user_id = #{userId} AND is_passed = TRUE
+    </select>
+
+</mapper>
