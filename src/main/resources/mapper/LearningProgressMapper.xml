@@ -67,4 +67,17 @@
         WHERE lp.user_id = #{userId} AND c.course_id = #{courseId}
     </select>
 
+    <select id="getCourseProgressStatsForUser" resultType="map">
+        SELECT
+            c.id AS course_id,
+            COUNT(DISTINCT ch.id) AS total_chapters,
+            COUNT(DISTINCT CASE WHEN lp.is_completed = TRUE THEN lp.chapter_id END) AS completed_chapters,
+            COALESCE(SUM(lp.total_watch_time), 0) AS total_watch_time
+        FROM courses c
+        INNER JOIN chapters ch ON c.id = ch.course_id
+        LEFT JOIN learning_progress lp ON ch.id = lp.chapter_id AND lp.user_id = #{userId}
+        WHERE c.published = TRUE
+        GROUP BY c.id
+    </select>
+
 </mapper>

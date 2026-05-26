@@ -30,8 +30,10 @@ public class QuizResultResponse {
         private String questionText;
         private String userAnswer;
         private String correctAnswer;
+        private String correctOptionText;
         private Boolean isCorrect;
         private String explanation;
+        private List<String> knowledgeTags;
         private Integer score;
     }
 }

@@ -31,6 +31,8 @@ public class Quiz {
 
     private String explanation;
 
+    private String knowledgeTags;
+
     private Integer points;
 
     private LocalDateTime createdAt;

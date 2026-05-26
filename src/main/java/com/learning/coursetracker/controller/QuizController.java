@@ -6,6 +6,7 @@ import com.learning.coursetracker.dto.QuizSubmitRequest;
 import com.learning.coursetracker.entity.ChapterQuizResult;
 import com.learning.coursetracker.security.CurrentUser;
 import com.learning.coursetracker.service.QuizService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,18 +26,14 @@ public class QuizController {
     }
 
     @PostMapping("/submit")
-    public ResponseEntity<ApiResponse<QuizResultResponse>> submitQuiz(@RequestBody QuizSubmitRequest request) {
+    public ResponseEntity<ApiResponse<QuizResultResponse>> submitQuiz(@Valid @RequestBody QuizSubmitRequest request) {
         Long userId = currentUser.getUserId();
         if (userId == null) {
             return ResponseEntity.ok(ApiResponse.error(401, "未登录"));
         }
 
-        try {
-            QuizResultResponse result = quizService.submitQuiz(userId, request);
-            return ResponseEntity.ok(ApiResponse.success("提交成功", result));
-        } catch (RuntimeException e) {
-            return ResponseEntity.ok(ApiResponse.error(400, e.getMessage()));
-        }
+        QuizResultResponse result = quizService.submitQuiz(userId, request);
+        return ResponseEntity.ok(ApiResponse.success("提交成功", result));
     }
 
     @GetMapping("/chapter/{chapterId}/result")

@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
     option_d        VARCHAR(500),
     correct_answer  CHAR(1)         NOT NULL,
     explanation     TEXT,
+    knowledge_tags  VARCHAR(500),
     points          INT             DEFAULT 10,
     created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
@@ -161,6 +162,7 @@ COMMENT ON COLUMN quizzes.option_c IS '选项C';
 COMMENT ON COLUMN quizzes.option_d IS '选项D';
 COMMENT ON COLUMN quizzes.correct_answer IS '正确答案：A/B/C/D';
 COMMENT ON COLUMN quizzes.explanation IS '答案解析';
+COMMENT ON COLUMN quizzes.knowledge_tags IS '关联知识点标签，多个标签以逗号分隔';
 COMMENT ON COLUMN quizzes.points IS '题目分值';
 COMMENT ON COLUMN quizzes.created_at IS '创建时间';
 
@@ -214,7 +216,8 @@ CREATE TABLE IF NOT EXISTS quiz_scores (
     submitted_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE,
-    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+    UNIQUE(user_id, chapter_id, quiz_id)
 );
 
 COMMENT ON TABLE quiz_scores IS '测验成绩表';
@@ -230,6 +233,12 @@ COMMENT ON COLUMN quiz_scores.submitted_at IS '提交时间';
 CREATE INDEX IF NOT EXISTS idx_scores_user ON quiz_scores(user_id);
 CREATE INDEX IF NOT EXISTS idx_scores_chapter ON quiz_scores(chapter_id);
 CREATE INDEX IF NOT EXISTS idx_scores_submitted ON quiz_scores(submitted_at);
+CREATE INDEX IF NOT EXISTS idx_scores_user_chapter ON quiz_scores(user_id, chapter_id);
+CREATE INDEX IF NOT EXISTS idx_scores_user_correct ON quiz_scores(user_id, is_correct);
+CREATE INDEX IF NOT EXISTS idx_quiz_scores_quiz ON quiz_scores(quiz_id);
+
+CREATE INDEX IF NOT EXISTS idx_results_user_chapter ON chapter_quiz_results(user_id, chapter_id);
+CREATE INDEX IF NOT EXISTS idx_results_user_passed ON chapter_quiz_results(user_id, is_passed);
 
 -- ============================================================
 -- 8. 章节测验成绩汇总表 (chapter_quiz_results)
@@ -296,7 +305,7 @@ INSERT INTO chapters (course_id, title, description, video_url, duration, sort_o
     (2, 'Pandas入门', '学习Pandas数据处理', 'https://example.com/video/py2.mp4', 2500, 2, FALSE);
 
 -- 插入示例测验题目
-INSERT INTO quizzes (chapter_id, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, points) VALUES
-    (1, 'Spring Boot的主要优势是什么？', '配置繁琐', '约定优于配置', '需要大量XML配置', '不支持自动配置', 'B', 'Spring Boot遵循约定优于配置的原则，简化了Spring应用的开发', 10),
-    (1, 'Spring Boot项目的入口注解是？', '@Component', '@Service', '@SpringBootApplication', '@Configuration', 'C', '@SpringBootApplication是Spring Boot项目的核心入口注解', 10),
-    (2, 'Pandas中用于处理表格数据的主要数据结构是？', 'Array', 'Series', 'DataFrame', 'List', 'C', 'DataFrame是Pandas中处理表格数据的主要数据结构', 10);
+INSERT INTO quizzes (chapter_id, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, knowledge_tags, points) VALUES
+    (1, 'Spring Boot的主要优势是什么？', '配置繁琐', '约定优于配置', '需要大量XML配置', '不支持自动配置', 'B', 'Spring Boot遵循约定优于配置的原则，简化了Spring应用的开发', 'Spring Boot,约定优于配置,自动配置', 10),
+    (1, 'Spring Boot项目的入口注解是？', '@Component', '@Service', '@SpringBootApplication', '@Configuration', 'C', '@SpringBootApplication是Spring Boot项目的核心入口注解', 'Spring Boot,注解,核心注解', 10),
+    (2, 'Pandas中用于处理表格数据的主要数据结构是？', 'Array', 'Series', 'DataFrame', 'List', 'C', 'DataFrame是Pandas中处理表格数据的主要数据结构', 'Pandas,DataFrame,数据结构', 10);

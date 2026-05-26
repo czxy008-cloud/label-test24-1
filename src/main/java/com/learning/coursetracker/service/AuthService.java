@@ -4,6 +4,7 @@ import com.learning.coursetracker.dto.LoginRequest;
 import com.learning.coursetracker.dto.LoginResponse;
 import com.learning.coursetracker.dto.RegisterRequest;
 import com.learning.coursetracker.entity.User;
+import com.learning.coursetracker.exception.BusinessException;
 import com.learning.coursetracker.mapper.UserMapper;
 import com.learning.coursetracker.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,12 +35,12 @@ public class AuthService {
     public LoginResponse register(RegisterRequest request) {
         Optional<User> existingUser = userMapper.findByUsername(request.getUsername());
         if (existingUser.isPresent()) {
-            throw new RuntimeException("用户名已存在");
+            throw new BusinessException("用户名已存在");
         }
 
         Optional<User> existingEmail = userMapper.findByEmail(request.getEmail());
         if (existingEmail.isPresent()) {
-            throw new RuntimeException("邮箱已被注册");
+            throw new BusinessException("邮箱已被注册");
         }
 
         User user = User.builder()
@@ -62,14 +63,14 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         User user = userMapper.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
+                .orElseThrow(() -> new BusinessException(401, "用户名或密码错误"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new BusinessException(401, "用户名或密码错误");
         }
 
         if (!user.getEnabled()) {
-            throw new RuntimeException("账号已被禁用");
+            throw new BusinessException(401, "账号已被禁用");
         }
 
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername(), user.getRole());

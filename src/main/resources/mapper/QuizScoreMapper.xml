@@ -25,9 +25,31 @@
         SELECT * FROM quiz_scores WHERE user_id = #{userId}
     </select>
 
+    <select id="findWrongByUserId" resultMap="QuizScoreResultMap">
+        SELECT * FROM quiz_scores WHERE user_id = #{userId} AND is_correct = FALSE
+    </select>
+
+    <select id="countTotalQuestionsByUser" resultType="int">
+        SELECT COUNT(*) FROM quiz_scores WHERE user_id = #{userId}
+    </select>
+
+    <select id="countWrongQuestionsByUser" resultType="int">
+        SELECT COUNT(*) FROM quiz_scores WHERE user_id = #{userId} AND is_correct = FALSE
+    </select>
+
     <insert id="insert" parameterType="com.learning.coursetracker.entity.QuizScore" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO quiz_scores (user_id, chapter_id, quiz_id, user_answer, is_correct, score, submitted_at)
         VALUES (#{userId}, #{chapterId}, #{quizId}, #{userAnswer}, #{isCorrect}, #{score}, #{submittedAt})
+    </insert>
+
+    <insert id="upsert" parameterType="com.learning.coursetracker.entity.QuizScore">
+        INSERT INTO quiz_scores (user_id, chapter_id, quiz_id, user_answer, is_correct, score, submitted_at)
+        VALUES (#{userId}, #{chapterId}, #{quizId}, #{userAnswer}, #{isCorrect}, #{score}, #{submittedAt})
+        ON CONFLICT (user_id, chapter_id, quiz_id) DO UPDATE SET
+            user_answer = EXCLUDED.user_answer,
+            is_correct = EXCLUDED.is_correct,
+            score = EXCLUDED.score,
+            submitted_at = NOW()
     </insert>
 
     <delete id="deleteByUserAndChapter">

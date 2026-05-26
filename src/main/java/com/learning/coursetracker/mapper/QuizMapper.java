@@ -14,6 +14,8 @@ public interface QuizMapper {
 
     Optional<Quiz> findById(@Param("id") Long id);
 
+    List<Quiz> findByIds(@Param("ids") List<Long> ids);
+
     int countByChapterId(@Param("chapterId") Long chapterId);
 
     int insert(Quiz quiz);

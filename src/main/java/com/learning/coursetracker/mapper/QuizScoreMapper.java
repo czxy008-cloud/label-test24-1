@@ -18,7 +18,11 @@ public interface QuizScoreMapper {
 
     List<QuizScore> findByUserId(@Param("userId") Long userId);
 
+    List<QuizScore> findWrongByUserId(@Param("userId") Long userId);
+
     int insert(QuizScore quizScore);
+
+    int upsert(QuizScore quizScore);
 
     int deleteByUserAndChapter(@Param("userId") Long userId,
                                 @Param("chapterId") Long chapterId);
@@ -31,4 +35,8 @@ public interface QuizScoreMapper {
     int countPassedChapters(@Param("userId") Long userId);
 
     int countTotalChapters(@Param("userId") Long userId);
+
+    int countTotalQuestionsByUser(@Param("userId") Long userId);
+
+    int countWrongQuestionsByUser(@Param("userId") Long userId);
 }

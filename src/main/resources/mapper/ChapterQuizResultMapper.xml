@@ -19,6 +19,10 @@
         SELECT * FROM chapter_quiz_results WHERE user_id = #{userId} AND chapter_id = #{chapterId}
     </select>
 
+    <select id="findByUserAndChapterForUpdate" resultMap="ChapterQuizResultResultMap">
+        SELECT * FROM chapter_quiz_results WHERE user_id = #{userId} AND chapter_id = #{chapterId} FOR UPDATE
+    </select>
+
     <select id="findByUserId" resultMap="ChapterQuizResultResultMap">
         SELECT * FROM chapter_quiz_results WHERE user_id = #{userId}
     </select>
@@ -50,6 +54,21 @@
         WHERE id = #{id}
     </update>
 
+    <insert id="upsert" parameterType="com.learning.coursetracker.entity.ChapterQuizResult">
+        INSERT INTO chapter_quiz_results (user_id, chapter_id, total_score, max_score, correct_count,
+                                         total_count, attempt_count, is_passed, submitted_at)
+        VALUES (#{userId}, #{chapterId}, #{totalScore}, #{maxScore}, #{correctCount},
+                #{totalCount}, #{attemptCount}, #{isPassed}, #{submittedAt})
+        ON CONFLICT (user_id, chapter_id) DO UPDATE SET
+            total_score = EXCLUDED.total_score,
+            max_score = EXCLUDED.max_score,
+            correct_count = EXCLUDED.correct_count,
+            total_count = EXCLUDED.total_count,
+            attempt_count = chapter_quiz_results.attempt_count + 1,
+            is_passed = EXCLUDED.is_passed,
+            submitted_at = NOW()
+    </insert>
+
     <select id="getAverageScoreByUser" resultType="double">
         SELECT COALESCE(AVG(total_score), 0) FROM chapter_quiz_results WHERE user_id = #{userId}
     </select>
@@ -62,6 +81,17 @@
 
     <select id="countPassedChapters" resultType="int">
         SELECT COUNT(*) FROM chapter_quiz_results WHERE user_id = #{userId} AND is_passed = TRUE
+    </select>
+
+    <select id="getAverageScoresByUserForAllCourses" resultType="map">
+        SELECT
+            c.id AS course_id,
+            COALESCE(AVG(cqr.total_score), 0) AS average_score
+        FROM courses c
+        INNER JOIN chapters ch ON c.id = ch.course_id
+        LEFT JOIN chapter_quiz_results cqr ON ch.id = cqr.chapter_id AND cqr.user_id = #{userId}
+        WHERE c.published = TRUE
+        GROUP BY c.id
     </select>
 
 </mapper>

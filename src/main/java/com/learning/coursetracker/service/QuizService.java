@@ -5,6 +5,7 @@ import com.learning.coursetracker.dto.QuizSubmitRequest;
 import com.learning.coursetracker.entity.ChapterQuizResult;
 import com.learning.coursetracker.entity.Quiz;
 import com.learning.coursetracker.entity.QuizScore;
+import com.learning.coursetracker.exception.BusinessException;
 import com.learning.coursetracker.mapper.ChapterQuizResultMapper;
 import com.learning.coursetracker.mapper.QuizMapper;
 import com.learning.coursetracker.mapper.QuizScoreMapper;
@@ -13,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class QuizService {
@@ -31,13 +34,20 @@ public class QuizService {
 
     @Transactional
     public QuizResultResponse submitQuiz(Long userId, QuizSubmitRequest request) {
+        if (request.getChapterId() == null) {
+            throw new BusinessException("章节ID不能为空");
+        }
+        if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
+            throw new BusinessException("答案列表不能为空");
+        }
+
         List<Quiz> quizzes = quizMapper.findByChapterId(request.getChapterId());
 
         if (quizzes.isEmpty()) {
-            throw new RuntimeException("该章节暂无测验题目");
+            throw new BusinessException("该章节暂无测验题目");
         }
 
-        quizScoreMapper.deleteByUserAndChapter(userId, request.getChapterId());
+        chapterQuizResultMapper.findByUserAndChapterForUpdate(userId, request.getChapterId());
 
         List<QuizResultResponse.QuizDetail> details = new ArrayList<>();
         int totalScore = 0;
@@ -70,15 +80,17 @@ public class QuizService {
                     .submittedAt(LocalDateTime.now())
                     .build();
 
-            quizScoreMapper.insert(quizScore);
+            quizScoreMapper.upsert(quizScore);
 
             details.add(QuizResultResponse.QuizDetail.builder()
                     .quizId(quiz.getId())
                     .questionText(quiz.getQuestionText())
                     .userAnswer(userAnswer)
                     .correctAnswer(quiz.getCorrectAnswer())
+                    .correctOptionText(getOptionText(quiz, quiz.getCorrectAnswer()))
                     .isCorrect(isCorrect)
                     .explanation(quiz.getExplanation())
+                    .knowledgeTags(parseKnowledgeTags(quiz.getKnowledgeTags()))
                     .score(isCorrect ? quiz.getPoints() : 0)
                     .build());
         }
@@ -86,32 +98,18 @@ public class QuizService {
         double passingScore = maxScore * 0.6;
         boolean isPassed = totalScore >= passingScore;
 
-        Optional<ChapterQuizResult> existingResult = chapterQuizResultMapper.findByUserAndChapter(userId, request.getChapterId());
-
-        if (existingResult.isPresent()) {
-            ChapterQuizResult result = existingResult.get();
-            result.setTotalScore(totalScore);
-            result.setMaxScore(maxScore);
-            result.setCorrectCount(correctCount);
-            result.setTotalCount(quizzes.size());
-            result.setAttemptCount(result.getAttemptCount() + 1);
-            result.setIsPassed(isPassed);
-            result.setSubmittedAt(LocalDateTime.now());
-            chapterQuizResultMapper.update(result);
-        } else {
-            ChapterQuizResult result = ChapterQuizResult.builder()
-                    .userId(userId)
-                    .chapterId(request.getChapterId())
-                    .totalScore(totalScore)
-                    .maxScore(maxScore)
-                    .correctCount(correctCount)
-                    .totalCount(quizzes.size())
-                    .attemptCount(1)
-                    .isPassed(isPassed)
-                    .submittedAt(LocalDateTime.now())
-                    .build();
-            chapterQuizResultMapper.insert(result);
-        }
+        ChapterQuizResult result = ChapterQuizResult.builder()
+                .userId(userId)
+                .chapterId(request.getChapterId())
+                .totalScore(totalScore)
+                .maxScore(maxScore)
+                .correctCount(correctCount)
+                .totalCount(quizzes.size())
+                .attemptCount(1)
+                .isPassed(isPassed)
+                .submittedAt(LocalDateTime.now())
+                .build();
+        chapterQuizResultMapper.upsert(result);
 
         double accuracy = quizzes.size() > 0 ? (double) correctCount / quizzes.size() * 100 : 0;
 
@@ -132,5 +130,26 @@ public class QuizService {
 
     public List<ChapterQuizResult> getUserResults(Long userId) {
         return chapterQuizResultMapper.findByUserId(userId);
+    }
+
+    private String getOptionText(Quiz quiz, String answerLetter) {
+        if (answerLetter == null) return null;
+        switch (answerLetter.toUpperCase()) {
+            case "A": return quiz.getOptionA();
+            case "B": return quiz.getOptionB();
+            case "C": return quiz.getOptionC();
+            case "D": return quiz.getOptionD();
+            default: return null;
+        }
+    }
+
+    private List<String> parseKnowledgeTags(String knowledgeTags) {
+        if (knowledgeTags == null || knowledgeTags.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.stream(knowledgeTags.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 }

@@ -21,21 +21,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            LoginResponse response = authService.login(request);
-            return ResponseEntity.ok(ApiResponse.success("登录成功", response));
-        } catch (RuntimeException e) {
-            return ResponseEntity.ok(ApiResponse.error(401, e.getMessage()));
-        }
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("登录成功", response));
     }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<LoginResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        try {
-            LoginResponse response = authService.register(request);
-            return ResponseEntity.ok(ApiResponse.success("注册成功", response));
-        } catch (RuntimeException e) {
-            return ResponseEntity.ok(ApiResponse.error(400, e.getMessage()));
-        }
+        LoginResponse response = authService.register(request);
+        return ResponseEntity.ok(ApiResponse.success("注册成功", response));
     }
 }

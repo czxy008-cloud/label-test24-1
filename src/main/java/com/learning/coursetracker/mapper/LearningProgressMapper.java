@@ -31,4 +31,6 @@ public interface LearningProgressMapper {
 
     int getTotalWatchTimeByUserAndCourse(@Param("userId") Long userId,
                                           @Param("courseId") Long courseId);
+
+    List<Map<String, Object>> getCourseProgressStatsForUser(@Param("userId") Long userId);
 }
